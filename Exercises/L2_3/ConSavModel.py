@@ -37,6 +37,14 @@ class ConSavModelClass(EconModelClass):
         
         par.sigma_xi = 0.10 # std. of transitory shock
         par.Nxi = 2 # number of grid points for xi
+        
+        # Unemployment
+        par.seperation = 0.
+        par.job_find = 0.5
+
+        # Benefit as share of base wage 
+        par.benefit = 0.1
+
 
         # saving
         par.r = 0.02 # interest rate
@@ -79,9 +87,38 @@ class ConSavModelClass(EconModelClass):
             par.xi_trans = np.ones((1,1))
 
         # combined
-        par.Nz = par.Nxi*par.Nzt
-        par.z_grid = np.repeat(par.xi_grid,par.Nzt)*np.tile(par.zt_grid,par.Nxi)
-        par.z_trans = np.kron(par.xi_trans,par.zt_trans)
+        par.Nz = par.Nxi*par.Nzt*par.Nu
+        # Add wage directly
+        z_grid_nou  = par.w* np.repeat(par.xi_grid,par.Nzt)*np.tile(par.zt_grid,par.Nxi)
+        z_trans_nou = np.kron(par.xi_trans,par.zt_trans)
+
+        # Adjust for unemployment risk
+        if par.seperation>0:
+            assert par.seperation>=0 & par.seperation<=1 & par.job_find>=0 & par.job_find<=1, 'Seperation rate and job finding rate must be between 0 and 1 and sum to 1'
+            # Fill out standard variables
+            par.Nu = 2
+            par.u_trans = np.array([[1-par.seperation, par.seperation ], [par.job_find, 1-par.job_find]])
+            par.u_grid= np.array([1,0])
+
+            par.z_grid = np.ones(par.Nz*par.Nu) *par.benefit
+            par.z_grid[:par.Nz] = z_grid_nou
+            par.z_trans = np.kron(par.u_trans,z_trans_nou)
+
+            # Adjust Nz 
+            par.Nz = par.Nz*par.Nu
+
+        else:
+            par.z_grid = z_grid_nou
+            par.z_trans = z_trans_nou
+
+            # In case 
+            par.Nu = 1
+            par.u_grid = np.ones(1)
+            par.u_trans = np.ones((1,1))
+        
+
+
+
         par.z_trans_cumsum = np.cumsum(par.z_trans,axis=1)
         par.z_ergodic = find_ergodic(par.z_trans)
         par.z_ergodic_cumsum = np.cumsum(par.z_ergodic)
@@ -140,7 +177,7 @@ class ConSavModelClass(EconModelClass):
                 # a. next-period value function
                 if it == 0: # guess on consuming everything
                     
-                    m_plus = (1+par.r)*par.a_grid[np.newaxis,:] + par.w*par.z_grid[:,np.newaxis]
+                    m_plus = (1+par.r)*par.a_grid[np.newaxis,:] + par.z_grid[:,np.newaxis]
                     c_plus_max = m_plus - par.w*par.b
                     c_plus = 0.99*c_plus_max # arbitary factor
                     v_plus = c_plus**(1-par.sigma)/(1-par.sigma)
@@ -298,7 +335,7 @@ def solve_hh_backwards_vfi(par,vbeg_plus,c_plus,vbeg,c,a):
         for i_a_lag in nb.prange(par.Na):
 
             # i. cash-on-hand and maximum consumption
-            m = (1+par.r)*par.a_grid[i_a_lag] + par.w*par.z_grid[i_z]
+            m = (1+par.r)*par.a_grid[i_a_lag] + par.z_grid[i_z]
             c_max = m - par.b*par.w
 
             # ii. initial consumption and bounds
@@ -345,7 +382,7 @@ def solve_hh_backwards_egm(par,c_plus,c,a):
         # c. interpolate from (m,c) to (a_lag,c)
         for i_a_lag in range(par.Na):
             
-            m = (1+par.r)*par.a_grid[i_a_lag] + par.w*par.z_grid[i_z]
+            m = (1+par.r)*par.a_grid[i_a_lag] + par.z_grid[i_z]
             
             if m <= m_vec[0]: # constrained (lower m than choice with a = 0)
                 c[i_z,i_a_lag] = m - par.b*par.w
@@ -385,7 +422,7 @@ def simulate_forwards_mc(t,par,sim,sol):
         c[t,i] = interp_1d(par.a_grid,sol.c[i_z_,:],a_lag)
 
         # d. end-of-period assets
-        m = (1+par.r)*a_lag + par.w*par.z_grid[i_z_]
+        m = (1+par.r)*a_lag + par.z_grid[i_z_]
         a[t,i] = m-c[t,i]
 
 ##########################
