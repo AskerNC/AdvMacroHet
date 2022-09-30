@@ -63,6 +63,10 @@ def obj_ss(B_ss,model,do_print=False):
     # Using distribution of productivity
     
     ss.r =  1/ss.B *par.tau*ss.Y 
+    
+    if np.isclose(par.tau,0):
+        ss.r= 0
+
     #ss.w = (1.0-par.alpha)*ss.Gamma*(ss.K/ss.L)**par.alpha
 
     # c. household behavior
@@ -88,13 +92,13 @@ def obj_ss(B_ss,model,do_print=False):
 
     return ss.clearing_A # target to hit
     
-def find_ss(model,method='direct',do_print=False):
+def find_ss(model,method='direct',do_print=False,K_min=0.01,K_max=25.0,NK=100):
     """ find steady state using the direct or indirect method """
 
     t0 = time.time()
 
     if method == 'direct':
-        find_ss_direct(model,do_print=do_print)
+        find_ss_direct(model,do_print=do_print,K_min=K_min,K_max=K_max,NK=NK)
     elif method == 'indirect':
         find_ss_indirect(model,do_print=do_print)
     else:
@@ -102,8 +106,9 @@ def find_ss(model,method='direct',do_print=False):
 
     if do_print: print(f'found steady state in {elapsed(t0)}')
 
+
 # K should be renamed to B
-def find_ss_direct(model,do_print=False,K_min=0.1,K_max=10.0,NK=10):
+def find_ss_direct(model,do_print=False,K_min=0,K_max=10.0,NK=10):
     """ find steady state using direct method """
 
     # a. broad search
@@ -111,7 +116,7 @@ def find_ss_direct(model,do_print=False,K_min=0.1,K_max=10.0,NK=10):
 
     K_ss_vec = np.linspace(K_min,K_max,NK) # trial values
     clearing_A = np.zeros(K_ss_vec.size) # asset market errors
-
+    
     for i,K_ss in enumerate(K_ss_vec):
         
         try:
@@ -124,9 +129,9 @@ def find_ss_direct(model,do_print=False,K_min=0.1,K_max=10.0,NK=10):
             
     # b. determine search bracket
     if do_print: print(f'### step 2: determine search bracket ###\n')
+    
+    K_max, K_min = find_K_interval(K_ss_vec,clearing_A,model,do_print)
 
-    K_max = np.min(K_ss_vec[clearing_A < 0])
-    K_min = np.max(K_ss_vec[clearing_A > 0])
 
     if do_print: print(f'K in [{K_min:12.8f},{K_max:12.8f}]\n')
 
@@ -140,6 +145,9 @@ def find_ss_direct(model,do_print=False,K_min=0.1,K_max=10.0,NK=10):
 
 def find_ss_indirect(model,do_print=False):
     """ find steady state using indirect method """
+    
+    
+    raise NotImplementedError("Indirect method not implemented for bond model")
 
     par = model.par
     ss = model.ss
@@ -184,3 +192,44 @@ def find_ss_indirect(model,do_print=False):
         print(f'Implied B/Y = {ss.B/ss.Y:6.3f}') 
         print(f'Discrepancy in b-A_hh = {ss.B-ss.A_hh:12.8f}') # = 0 by construction
         print(f'Discrepancy in C-C_hh = {ss.C-ss.C_hh:12.8f}\n') # != 0 due to numerical error 
+
+
+
+
+def find_K_interval(K_ss_vec,clearing_A,model,do_print):
+    '''
+    This function makes sure the interval for K have a negative and 
+    a postive value for clearing_A
+    '''
+    lower_bound = (np.sum((clearing_A<0))<1)
+    K_max =  np.min(K_ss_vec[clearing_A < 0])
+    k_upper = np.max(K_ss_vec)
+
+    while lower_bound:
+        k_upper += 1
+        new_clearing =  obj_ss(k_upper,model,do_print=do_print)
+        if do_print:
+            print(f'The proposed K_max was to small trying  {k_upper} ->')
+            print(f'clearing_A = {new_clearing:12.8f}\n')
+
+        if np.notna(new_clearing) and new_clearing<0:
+            K_max = k_upper
+            
+
+
+    upper_bound = (np.sum((clearing_A>0))<1)
+    K_min =  np.max(K_ss_vec[clearing_A > 0])
+    k_lower = np.min(K_ss_vec)
+
+    while upper_bound:
+        k_lower -= 1
+        new_clearing =  obj_ss(k_lower,model,do_print=do_print)
+
+        if do_print:
+            print(f'The proposed K_min was to large trying  {k_lower} ->')
+            print(f'clearing_A = {new_clearing:12.8f}\n')
+
+        if np.notna(new_clearing) and new_clearing<0:
+            k_min = k_lower
+            
+    return K_max, K_min

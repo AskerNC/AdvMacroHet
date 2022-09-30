@@ -77,10 +77,12 @@ class HANCModelClass(EconModelClass,GEModelClass):
 
         # h. misc.
         par.max_iter_solve = 50_000 # maximum number of iterations when solving household problem
-        par.max_iter_simulate = 50_000 # maximum number of iterations when simulating household problem
+        par.max_iter_simulate = 200_000 # maximum number of iterations when simulating household problem
         
-        par.tol_solve = 1e-12 # tolerance when solving household problem
-        par.tol_simulate = 1e-12 # tolerance when simulating household problem
+        par.tol_solve = 1e-8 # tolerance when solving household problem
+        
+        # I think when simulating with high tau, it takes many periods to get to the equilibrium distribution, becaues savings are accumulated very slowly
+        par.tol_simulate = 1e-6 # tolerance when simulating household problem
         
     def allocate(self):
         """ allocate model """

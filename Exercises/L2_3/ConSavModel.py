@@ -38,9 +38,14 @@ class ConSavModelClass(EconModelClass):
         par.sigma_xi = 0.10 # std. of transitory shock
         par.Nxi = 2 # number of grid points for xi
         
-        # Unemployment
+        # Unemployment probs
         par.seperation = 0.
         par.job_find = 0.2
+
+        # Beliefs about job loss probability
+        par.E_seperation = 0.
+        par.E_job_find   = 0.2
+
 
         # Benefit as share of base wage 
         par.benefit = 0.1
@@ -98,11 +103,16 @@ class ConSavModelClass(EconModelClass):
             # Fill out standard variables
             par.Nu = 2
             par.u_trans = np.array([[1-par.seperation, par.seperation ], [par.job_find, 1-par.job_find]])
+            par.E_u_trans = np.array([[1-par.E_seperation, par.E_seperation ], [par.E_job_find, 1-par.E_job_find]])
             par.u_grid= np.array([1,0])
 
             par.z_grid = np.ones(par.Nz*par.Nu) *par.benefit
             par.z_grid[:par.Nz] = z_grid_nou
+            
+            
             par.z_trans = np.kron(par.u_trans,z_trans_nou)
+            # Belifies might differ from actual job loss and finding probs:
+            par.E_z_trans = np.kron(par.E_u_trans,z_trans_nou)
 
             # Adjust Nz 
             par.Nz = par.Nz*par.Nu
@@ -111,13 +121,14 @@ class ConSavModelClass(EconModelClass):
             par.z_grid = z_grid_nou
             par.z_trans = z_trans_nou
 
+            # If there is no job loss expectations are true 
+            par.E_z_trans = z_trans_nou
+
             # In case 
             par.Nu = 1
             par.u_grid = np.ones(1)
             par.u_trans = np.ones((1,1))
-        
-
-
+            par.E_u_trans = par.u_trans
 
         par.z_trans_cumsum = np.cumsum(par.z_trans,axis=1)
         par.z_ergodic = find_ergodic(par.z_trans)
@@ -181,7 +192,7 @@ class ConSavModelClass(EconModelClass):
                     c_plus_max = m_plus - par.w*par.b
                     c_plus = 0.99*c_plus_max # arbitary factor
                     v_plus = c_plus**(1-par.sigma)/(1-par.sigma)
-                    vbeg_plus = par.z_trans@v_plus
+                    vbeg_plus = par.E_z_trans@v_plus
 
                 else:
 
@@ -358,7 +369,7 @@ def solve_hh_backwards_vfi(par,vbeg_plus,c_plus,vbeg,c,a):
             v[i_z,i_a_lag] = results.fun # convert to maximum
 
     # b. expectation step
-    vbeg[:,:] = par.z_trans@v
+    vbeg[:,:] = par.E_z_trans@v
 
 ##################
 # solution - egm #
@@ -373,7 +384,7 @@ def solve_hh_backwards_egm(par,c_plus,c,a):
         # a. post-decision marginal value of cash
         q_vec = np.zeros(par.Na)
         for i_z_plus in range(par.Nz):
-            q_vec += par.z_trans[i_z,i_z_plus]*c_plus[i_z_plus,:]**(-par.sigma)
+            q_vec += par.E_z_trans[i_z,i_z_plus]*c_plus[i_z_plus,:]**(-par.sigma)
         
         # b. implied consumption function
         c_vec = (par.beta*(1+par.r)*q_vec)**(-1.0/par.sigma)
