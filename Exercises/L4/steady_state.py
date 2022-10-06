@@ -65,7 +65,7 @@ def obj_ss(B_ss,model,do_print=False):
     ss.r =  1/ss.B *par.tau*ss.Y 
     
     if np.isclose(par.tau,0):
-        ss.r= 0
+        ss.r= 0.
 
     #ss.w = (1.0-par.alpha)*ss.Gamma*(ss.K/ss.L)**par.alpha
 
