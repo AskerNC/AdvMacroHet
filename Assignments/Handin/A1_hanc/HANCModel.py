@@ -32,11 +32,11 @@ class HANCModelClass(EconModelClass,GEModelClass):
 
         # d. all variables
         self.varlist = [
-            'Y','C','I','G','IB','Gamma','K','L','B','taxa','taxl',
+            'Y','C','I','G','IB','Gamma','K','L','KL','B','taxa','taxl',
             'rk','w','r','taua','taul',
-            'A_hh','C_hh',
-            'clearing_A','clearing_C','Clearing_L']
-            # ,'clearing_L'
+            'A_hh','C_hh','ELL_hh','U_hh','L_hh',
+            'clearing_A','clearing_C','clearing_L']
+            
 
         # e. functions
         self.solve_hh_backwards = household_problem.solve_hh_backwards
@@ -59,14 +59,14 @@ class HANCModelClass(EconModelClass,GEModelClass):
         par.beta = 0.96 # discount factor
         par.sigma = 2.0 # CRRA coefficient
 
-        par.varphi = np.array([0.9,1.1,0.9,1.1])
+        par.varphi_grid = np.array([0.9,1.1,0.9,1.1])
         par.nu = 1.
 
         # b. income parameters
         par.rho_z = 0.96 # AR(1) parameter
-        par.sigma_psi = 0.10 # std. of shock
+        par.sigma_psi = 0.15 # std. of shock
 
-        par.zeta  = np.array([0.9,0.9,1.1,1.1])
+        par.zeta_grid  = np.array([0.9,0.9,1.1,1.1])
 
         # c. production and investment
         par.alpha = 0.3 # cobb-douglas
@@ -86,10 +86,11 @@ class HANCModelClass(EconModelClass,GEModelClass):
         par.max_iter_simulate = 50_000 # maximum number of iterations when simulating household problem
         par.max_iter_ell = 100
 
+        par.tol_root = 1e-8 # tolerance when finding general equilibrium with root finder
 
-        par.tol_solve    = 1e-7 # tolerance when solving household problem
-        par.tol_simulate = 1e-7 # tolerance when simulating household problem
-        par.tol_ell      = 1e-7
+        par.tol_solve    = 1e-6 # tolerance when solving household problem
+        par.tol_simulate = 1e-6 # tolerance when simulating household problem
+        par.tol_ell      = 1e-6
 
     def allocate(self):
         """ allocate model """
