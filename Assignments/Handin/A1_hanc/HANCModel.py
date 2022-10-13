@@ -85,12 +85,13 @@ class HANCModelClass(EconModelClass,GEModelClass):
         par.max_iter_solve = 50_000 # maximum number of iterations when solving household problem
         par.max_iter_simulate = 50_000 # maximum number of iterations when simulating household problem
         par.max_iter_ell = 100
+        par.max_iter_ss = 100
 
-        par.tol_root = 1e-8 # tolerance when finding general equilibrium with root finder
+        par.tol_root = 1e-7 # tolerance when finding general equilibrium with root finder
 
-        par.tol_solve    = 1e-6 # tolerance when solving household problem
-        par.tol_simulate = 1e-6 # tolerance when simulating household problem
-        par.tol_ell      = 1e-6
+        par.tol_solve    = 1e-7 # tolerance when solving household problem
+        par.tol_simulate = 1e-7 # tolerance when simulating household problem
+        par.tol_ell      = 1e-7
 
     def allocate(self):
         """ allocate model """

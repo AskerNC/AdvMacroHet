@@ -1,10 +1,13 @@
-def brentq(f,a,b,args=(),xtol=1e-8,rtol=1e-8,max_iter=1_000,
+def brentq(f,a,b,args=(),fa=None,fb=None,xtol=1e-8,rtol=1e-8,max_iter=1_000,
     do_print=False,varname='x',funcname='f'):
     """ brentq root-finder """
 
     # a. initial evaluation
-    fa = f(a,*args)
-    fb = f(b,*args)
+    # Allow for inital function values 
+    if fa is None:
+        fa = f(a,*args)
+    if fb is None:
+        fb = f(b,*args)
 
     if fa*fb > 0:
         raise ValueError(f'f(a) and f(b) must have different signs [{funcname}]')

@@ -121,7 +121,7 @@ def obj_ss(x ,model,do_print=False):
 def find_ss(model,method='direct',do_print=False,
                     x0=np.array([1.,2.]),bounds= ((0.1,10),(0.1,10)),root_method='hybr',
                     N=5,
-                    solveclearing='A',bracket=[0.1,20.]):
+                    solveclearing='A',roption='positive',lower=0.5,upper_mult=6,step=0.05,kl_bounds = None):
     """ find steady state using the direct or indirect method """
 
     t0 = time.time()
@@ -132,7 +132,7 @@ def find_ss(model,method='direct',do_print=False,
     elif method == 'root':
         find_ss_root(model,x0,root_method,do_print=do_print)
     elif method=='kl':
-        find_ss_kl(model,solveclearing,bracket,do_print=do_print)
+        find_ss_kl(model,solveclearing,roption,lower,upper_mult,step, kl_bounds,do_print=do_print)
     else:
         raise NotImplementedError
 
@@ -187,23 +187,37 @@ def find_ss_root(model,x0,root_method, do_print=False):
 
 
 
+def find_ss_kl(model,solveclearing,roption,lower,upper_mult,step,kl_bounds,do_print=False):
+    # Gamma for finding klguess0
+    model.ss.Gamma = model.par.Gamma
 
-def find_ss_kl(model,solveclearing,bracket,do_print=False):
-    if do_print: print(f'### step 1 going strait to optimize.root_scalar')
+    klguess0 = (model.par.delta/(model.par.alpha*model.ss.Gamma))**(1/(model.par.alpha-1))
+    if roption=='positive': 
 
-    #res = optimize.root_scalar(obj_ss_kl,bracket=bracket, args=(model,solveclearing),xtol=model.par.tol_root)
+        if kl_bounds is None:
+            kl_bounds = [lower,klguess0*(1-step)]
 
-    #if do_print:
-     #   print(res)
-    '''
-    root_finding.brentq(
-            obj_ss_kl,bracket[0],bracket[1],args=(model,solveclearing),do_print=do_print,
+        root_finding.brentq(
+            obj_ss_kl,kl_bounds[0],kl_bounds[1],args=(model,solveclearing),do_print=do_print,
             varname='KL',funcname=f'{solveclearing}_clearing'
-        )
-    '''
-    res = optimize.root_scalar(obj_ss_kl, x0=3., x1=3.3,args=(model,solveclearing),xtol=model.par.tol_root)
-    if do_print:
-        print(res)
+            )
+
+    elif roption=='negative':
+        if kl_bounds is None:
+            kl_bounds = [klguess0*(1+step),klguess0*upper_mult]
+        
+        fa = obj_ss_kl(kl_bounds[0],model,solveclearing,do_print=do_print)
+        fb = obj_ss_kl(kl_bounds[1],model,solveclearing,do_print=do_print)
+
+        assert fa*fb<=0, f'\nSolution not found for kl bounds = {kl_bounds[0]:10.3f}, {kl_bounds[1]:10.3f}\nClearings:                       = {fa:10.3f}, {fb:10.3f}'
+
+        root_finding.brentq(
+            obj_ss_kl,kl_bounds[0],kl_bounds[1],args=(model,solveclearing),do_print=do_print,
+            varname='KL',funcname=f'{solveclearing}_clearing'
+            )
+    else:
+        raise NotImplementedError
+
 
 def obj_ss_kl(x ,model,solveclearing,do_print=False):
     """ objective when solving for steady state capital-labor ratio """
@@ -224,15 +238,15 @@ def obj_ss_kl(x ,model,solveclearing,do_print=False):
 
     if np.isclose(ss.r,0):
         # Model cant be sovled for r close to zero 
-        print('Tried r close to zero, returning the previous clearing values')
-        return ss.clearing_A
+        print('Tried r too close to zero, returning the previous clearing values')
+        return ss.clearing_A*10
     
     ss.w = (1.0-par.alpha)*ss.Gamma*(ss.KL)**par.alpha
 
     # c. household behavior
     if do_print:
 
-        print(f'guess {ss.K = :.4f}')    
+        print(f'guess {ss.KL = :.4f}')    
         print(f'implied {ss.r = :.4f}')
         print(f'implied {ss.w = :.4f}')
 
