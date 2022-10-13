@@ -189,7 +189,7 @@ def find_ss_root(model,x0,root_method, do_print=False):
 
 def find_ss_kl(model,solveclearing,roption,lower,upper_mult,step,kl_bounds,do_print=False):
     # Gamma for finding klguess0
-    model.ss.Gamma = model.par.Gamma
+    model.ss.Gamma = model.par.Gamma_ss
 
     klguess0 = (model.par.delta/(model.par.alpha*model.ss.Gamma))**(1/(model.par.alpha-1))
     if roption=='positive': 
@@ -206,8 +206,8 @@ def find_ss_kl(model,solveclearing,roption,lower,upper_mult,step,kl_bounds,do_pr
         if kl_bounds is None:
             kl_bounds = [klguess0*(1+step),klguess0*upper_mult]
         
-        fa = obj_ss_kl(kl_bounds[0],model,solveclearing,do_print=do_print)
-        fb = obj_ss_kl(kl_bounds[1],model,solveclearing,do_print=do_print)
+        fa = obj_ss_kl(kl_bounds[0],model,solveclearing)
+        fb = obj_ss_kl(kl_bounds[1],model,solveclearing)
 
         assert fa*fb<=0, f'\nSolution not found for kl bounds = {kl_bounds[0]:10.3f}, {kl_bounds[1]:10.3f}\nClearings:                       = {fa:10.3f}, {fb:10.3f}'
 
@@ -239,7 +239,7 @@ def obj_ss_kl(x ,model,solveclearing,do_print=False):
     if np.isclose(ss.r,0):
         # Model cant be sovled for r close to zero 
         print('Tried r too close to zero, returning the previous clearing values')
-        return ss.clearing_A*10
+        return ss.clearing_A
     
     ss.w = (1.0-par.alpha)*ss.Gamma*(ss.KL)**par.alpha
 
