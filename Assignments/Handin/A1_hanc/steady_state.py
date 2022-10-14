@@ -118,7 +118,7 @@ def obj_ss(x ,model,do_print=False):
 
     return np.array([ss.clearing_A,ss.clearing_L]) # target to hit
     
-def find_ss(model,method='direct',do_print=False,
+def find_ss(model,method='kl',do_print=False,
                     x0=np.array([1.,2.]),bounds= ((0.1,10),(0.1,10)),root_method='hybr',
                     N=5,
                     solveclearing='A',roption='positive',lower=0.5,upper_mult=6,step=0.05,kl_bounds = None):
