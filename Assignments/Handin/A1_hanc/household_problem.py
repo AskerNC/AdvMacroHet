@@ -12,6 +12,7 @@ def solve_hh_backwards(par,z_trans,r,w,taua,taul,vbeg_a_plus,vbeg_a,a,c,ell,u):
     # prepare
     rt = (1-taua)* r
     m_exo = (1+ rt ) * par.a_grid
+    
 
     for i_fix in range(par.Nfix):
         # a. solve step
@@ -19,23 +20,22 @@ def solve_hh_backwards(par,z_trans,r,w,taua,taul,vbeg_a_plus,vbeg_a,a,c,ell,u):
             # i. EGM
 
             # a. prepare
-            wt = (1-taul)*w*par.z_grid[i_z]*par.zeta_grid[i_fix]
-            
+            wt = w*par.z_grid[i_z]*par.zeta_grid[i_fix]
 
-            fac = (wt/ par.varphi_grid[i_fix] ) **(1/ par.nu )
+            fac = (par.theta* wt**par.theta* (1-taul) / ( par.varphi_grid[i_fix] *par.xh_theta )) **(1/ (par.nu-par.theta+1) )
             
             # b. use FOCs
             c_endo = ( par.beta * vbeg_a_plus[i_fix,i_z] ) **( -1/ par.sigma )
-            ell_endo = fac *( c_endo ) **( - par.sigma / par.nu )
+            ell_endo = fac *( c_endo ) **( - par.sigma /( par.nu-par.theta+1) )
             
             # c. interpolation
-            m_endo = c_endo + par.a_grid - wt * ell_endo
+            m_endo = c_endo + par.a_grid - (1-taul)*((wt * ell_endo)**(par.theta)/par.xh_theta )
             
             interp_1d_vec( m_endo , c_endo , m_exo , c[i_fix,i_z] )
 
             interp_1d_vec( m_endo , ell_endo , m_exo , ell[i_fix,i_z] )
             
-            a[i_fix,i_z,:] = m_exo + wt * ell[i_fix,i_z] - c[i_fix,i_z]
+            a[i_fix,i_z,:] = m_exo +  (1-taul)*((wt * ell[i_fix,i_z])**(par.theta)/par.xh_theta ) - c[i_fix,i_z]
             
             # d. refinement at borrowing constraint
             for i_a in range( par.Na ):
@@ -46,12 +46,12 @@ def solve_hh_backwards(par,z_trans,r,w,taua,taul,vbeg_a_plus,vbeg_a,a,c,ell,u):
                     elli = ell[i_fix,i_z, i_a ]
                     it = 0
                     while True :
-                        ci = (1+ rt ) * par.a_grid[i_a] + wt * elli
-                        error = elli - fac * ci **( - par.sigma / par.nu )
+                        ci = (1+ rt ) * par.a_grid[i_a] + (1-taul)*((wt * elli)**(par.theta)/par.xh_theta )
+                        error = elli - fac * ci **( - par.sigma / (par.nu-par.theta+1) )
                         if np.abs( error ) < par.tol_ell :
                             break
                         else :
-                            derror = 1 - fac *( - par.sigma / par.nu ) * ci**( - par.sigma / par.nu -1) * wt
+                            derror = 1 - fac *( - par.sigma / (par.nu-par.theta+1) ) * ci**( - par.sigma / (par.nu-par.theta+1)-1) * par.theta* wt**par.theta* (1-taul)/par.xh_theta * elli**(par.theta-1) 
                             elli = elli - error / derror
                         it += 1
                         

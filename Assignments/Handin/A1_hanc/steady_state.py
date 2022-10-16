@@ -25,6 +25,7 @@ def prepare_hh_ss(model):
     # b. z
     par.z_grid[:],z_trans,z_ergodic,_,_ = log_rouwenhorst(par.rho_z,par.sigma_psi,par.Nz)
     
+
     #############################################
     # 2. transition matrix initial distribution #
     #############################################
@@ -44,6 +45,8 @@ def prepare_hh_ss(model):
     y = ss.w*par.z_grid
     c = m = (1+ss.r*(1-ss.taua))*par.a_grid[np.newaxis,:] + (1-ss.taul)* y[:,np.newaxis]
     v_a = (1+ss.r*(1-ss.taua))*c**(-par.sigma)
+
+    
 
     # b. expectation
     ss.vbeg_a[:] = ss.z_trans@v_a
@@ -95,7 +98,7 @@ def obj_ss(x ,model,do_print=False):
     # d. bonds market and taxe income
 
     ss.taxa =  ss.taua*ss.r*ss.A_hh
-    ss.taxl =   ss.taul*ss.w*ss.L_hh
+    ss.taxl =   ss.taul*np.sum( (par.zeta_grid[:,np.newaxis,np.newaxis]*(par.z_grid[np.newaxis,:,np.newaxis]*(ss.ell*ss.D)))**par.theta/par.xh_theta)
     ss.B = -1/ss.r * ( ss.G -ss.taxa -ss.taxl)
 
     if do_print: print(f'implied {ss.B = :.4f}')
@@ -127,7 +130,7 @@ def find_ss(model,method='kl',do_print=False,
     t0 = time.time()
 
     if method == 'direct':
-        find_ss_direct(model,bounds,N,do_print=do_print)
+        raise NotImplementedError
 
     elif method == 'root':
         find_ss_root(model,x0,root_method,do_print=do_print)
@@ -137,44 +140,6 @@ def find_ss(model,method='kl',do_print=False,
         raise NotImplementedError
 
     if do_print: print(f'found steady state in {elapsed(t0)}')
-
-def find_ss_direct(model,bounds,N,do_print=False):
-    """ find steady state using direct method """
-    raise NotImplementedError
-
-    # a. broad search
-    if do_print: print(f'### step 1: broad search ###\n')
-
-    K_ss_vec = np.linspace(bounds[0,0],bounds[0,1],N) # trial values
-    clearing_A = np.zeros(K_ss_vec.size) # asset market errors
-
-    for i,K_ss in enumerate(K_ss_vec):
-        
-        try:
-            clearing_A[i] = obj_ss(K_ss,model,do_print=do_print)
-        except Exception as e:
-            clearing_A[i] = np.nan
-            print(f'{e}')
-            
-        if do_print: print(f'clearing_A = {clearing_A[i]:12.8f}\n')
-            
-    # b. determine search bracket
-    if do_print: print(f'### step 2: determine search bracket ###\n')
-
-
-    #K_max, K_min = find_K_interval(K_ss_vec,clearing_A,model,do_print)
-    K_max = np.min(K_ss_vec[clearing_A < 0])
-    K_min = np.max(K_ss_vec[clearing_A > 0])
-
-    if do_print: print(f'K in [{K_min:12.8f},{K_max:12.8f}]\n')
-
-    # c. search
-    if do_print: print(f'### step 3: search ###\n')
-
-    root_finding.brentq(
-        obj_ss,K_min,K_max,args=(model,),do_print=do_print,
-        varname='K_ss',funcname='A_hh-K-B'
-    )
 
 
 def find_ss_root(model,x0,root_method, do_print=False):
@@ -257,7 +222,9 @@ def obj_ss_kl(x ,model,solveclearing,do_print=False):
     #ss.C_hh = np.sum(ss.c*ss.D)
     #ss.U_hh = np.sum(ss.u*ss.D)
     #ss.ELL_hh = np.sum( ss.ell*ss.D)
-    ss.L_hh   = np.sum( par.zeta_grid@(par.z_grid@(ss.ell*ss.D)) )
+    # Effective labor pr. grid point: 
+    l = par.zeta_grid[:,np.newaxis,np.newaxis]*par.z_grid[np.newaxis,:,np.newaxis]*ss.ell
+    ss.L_hh   = np.sum( l*ss.D)
     #ss.L_hh = np.sum(ss.ell * par.z_grid[np.newaxis,:,np.newaxis] * par.zeta_grid[:,np.newaxis,np.newaxis] * ss.D)
 
     if do_print: print(f'implied {ss.A_hh = :.4f}')
@@ -265,7 +232,9 @@ def obj_ss_kl(x ,model,solveclearing,do_print=False):
     # d. bonds market and taxe income
 
     ss.taxa =  ss.taua*ss.r*ss.A_hh
-    ss.taxl =   ss.taul*ss.w*ss.L_hh
+    
+    ss.taxl =   np.sum( (ss.w*l- (1-ss.taul)*(ss.w*l)**par.theta/par.xh_theta)  *ss.D)
+    
     ss.B = -1/ss.r * ( ss.G -ss.taxa -ss.taxl)
 
     if do_print: print(f'implied {ss.B = :.4f}')

@@ -50,7 +50,7 @@ class HANCModelClass(EconModelClass,GEModelClass):
 
         par.Nfix = 4 # number of fixed discrete states (none here)
         par.Nz = 7 # number of stochastic discrete states (here productivity)
-
+ 
         # Distribution of fixed states 
         par.probfix = np.ones(par.Nfix)/par.Nfix
     
@@ -72,6 +72,16 @@ class HANCModelClass(EconModelClass,GEModelClass):
         par.alpha = 0.3 # cobb-douglas
         par.delta = 0.10 # depreciation rate
         par.Gamma_ss = 1.0 # direct approach: technology level in steady state
+        
+        # d. tax parameters 
+        # parameters for increasing tax rate. theta=1 means constant marginal tax rate
+        par.theta = 1. 
+
+        # Parameter for which income gives the marginal tax taul ( when theta neq 1)
+        par.xh = 2.
+        
+        # To simplyfy calculations:
+        par.xh_theta = par.xh**(par.theta-1)
 
         # f. grids         
         par.a_max = 100.0 # maximum point in grid for a
