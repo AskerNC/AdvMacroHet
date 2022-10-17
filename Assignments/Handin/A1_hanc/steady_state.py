@@ -26,6 +26,19 @@ def prepare_hh_ss(model):
     par.z_grid[:],z_trans,z_ergodic,_,_ = log_rouwenhorst(par.rho_z,par.sigma_psi,par.Nz)
     
 
+
+    #############
+    # intitialize some value if they are not 
+    if np.isnan(ss.theta):
+        ss.theta = par.theta_ss
+
+    if np.isnan(ss.xh):
+        ss.xh = par.xh_ss
+
+    
+    ############
+
+
     #############################################
     # 2. transition matrix initial distribution #
     #############################################
@@ -47,6 +60,7 @@ def prepare_hh_ss(model):
     v_a = (1+ss.r*(1-ss.taua))*c**(-par.sigma)
 
     
+    
 
     # b. expectation
     ss.vbeg_a[:] = ss.z_trans@v_a
@@ -62,7 +76,7 @@ def obj_ss(x ,model,do_print=False):
     # a. production
     ss.Gamma = par.Gamma_ss # model user choice
     ss.K = K_ss
-    ss.L = L_ss # by assumption
+    ss.L = L_ss 
     ss.Y = ss.Gamma*ss.K**par.alpha*ss.L**(1-par.alpha)    
 
     # b. implied prices
@@ -90,15 +104,17 @@ def obj_ss(x ,model,do_print=False):
     #ss.C_hh = np.sum(ss.c*ss.D)
     #ss.U_hh = np.sum(ss.u*ss.D)
     #ss.ELL_hh = np.sum( ss.ell*ss.D)
-    ss.L_hh   = np.sum( par.zeta_grid@(par.z_grid@(ss.ell*ss.D)) )
+    
+    l = par.zeta_grid[:,np.newaxis,np.newaxis]*par.z_grid[np.newaxis,:,np.newaxis]*ss.ell
     #ss.L_hh = np.sum(ss.ell * par.z_grid[np.newaxis,:,np.newaxis] * par.zeta_grid[:,np.newaxis,np.newaxis] * ss.D)
-
+    ss.L_hh   = np.sum( l*ss.D)
+    
     if do_print: print(f'implied {ss.A_hh = :.4f}')
 
     # d. bonds market and taxe income
 
     ss.taxa =  ss.taua*ss.r*ss.A_hh
-    ss.taxl =   ss.taul*np.sum( (par.zeta_grid[:,np.newaxis,np.newaxis]*(par.z_grid[np.newaxis,:,np.newaxis]*(ss.ell*ss.D)))**par.theta/par.xh_theta)
+    ss.taxl =   np.sum( (ss.w*l- (1-ss.taul)*(ss.w*l)**ss.theta/(ss.xh**(ss.theta-1)))  *ss.D)
     ss.B = -1/ss.r * ( ss.G -ss.taxa -ss.taxl)
 
     if do_print: print(f'implied {ss.B = :.4f}')
@@ -178,7 +194,7 @@ def find_ss_kl(model,solveclearing,roption,lower,upper_mult,step,kl_bounds,do_pr
 
         root_finding.brentq(
             obj_ss_kl,kl_bounds[0],kl_bounds[1],args=(model,solveclearing),do_print=do_print,
-            varname='KL',funcname=f'{solveclearing}_clearing'
+            varname='KL',funcname=f'{solveclearing}_clearing',fa=fa,fb=fb
             )
     else:
         raise NotImplementedError
@@ -233,7 +249,7 @@ def obj_ss_kl(x ,model,solveclearing,do_print=False):
 
     ss.taxa =  ss.taua*ss.r*ss.A_hh
     
-    ss.taxl =   np.sum( (ss.w*l- (1-ss.taul)*(ss.w*l)**par.theta/par.xh_theta)  *ss.D)
+    ss.taxl =   np.sum( (ss.w*l- (1-ss.taul)*(ss.w*l)**ss.theta/(ss.xh**(ss.theta-1)))  *ss.D)
     
     ss.B = -1/ss.r * ( ss.G -ss.taxa -ss.taxl)
 

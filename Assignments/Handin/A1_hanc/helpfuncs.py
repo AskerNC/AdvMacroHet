@@ -60,15 +60,20 @@ def plot_clearing_across_kl(kl_list,out_dict,plotvar,solveclearing='A'):
 #### the equilibrium across tau 
 
 def make_model_dict(model,gridsize,start,end,roption='positive',method='kl',
-                    varlist =[ 'Y', 'C_hh','U_hh','A_hh','ELL_hh','I','K','L','KL','B','taxa','taxl','r','w']):
+                    varlist =[ 'Y', 'C_hh','U_hh','A_hh','ELL_hh','I','K','L','KL','B','taxa','taxl','r','w'],
+                    xname= 'taua',yname='taul',ystart=None,yend=None):
     
     '''
     Creates a dict of values of varlist for the equilibria of the model across different taus
 
     '''
+    if ystart is None:
+        ystart = start
+    if yend is None:
+        yend= end
 
-
-    tau_list = np.linspace(start,end,gridsize)
+    x_list = np.linspace(start,end,gridsize)
+    y_list = np.linspace(ystart,yend,gridsize)
 
     
     # Instead store output
@@ -77,14 +82,15 @@ def make_model_dict(model,gridsize,start,end,roption='positive',method='kl',
     model_solved= np.full((gridsize,gridsize), True)
 
 
-    for ia, taua in enumerate(tqdm(tau_list)):
-        for il, taul in enumerate(tau_list):
+    for ia, xvar in enumerate(tqdm(x_list)):
+        for il, yvar in enumerate(y_list):
             
             
             # reset tax rates:  
             ss =model.ss
-            ss.taua = taua 
-            ss.taul = taul
+            setattr(ss,xname,xvar)
+            setattr(ss,yname,yvar)
+
 
             # Solve model 
             try:
@@ -106,23 +112,25 @@ def make_model_dict(model,gridsize,start,end,roption='positive',method='kl',
 
     # store tau lists for plotting 
 
-    model_dict['taua_list'] = tau_list
-    model_dict['taul_list'] = tau_list
+    model_dict[f'{xname}_list'] = x_list
+    model_dict[f'{yname}_list'] = y_list
     model_dict['model_solved'] = model_solved
 
     return model_dict
 
 
 
-def plot_over_taugrid(model_dict,zvar_dict={'U_hh':'Average utility','C_hh':'Average consumption','ELL_hh':'Average labor, $\\ell$','K':'K','r':'r','B':'Bonds'},rows=3,cols=2,figsize=(16,12)):
+def plot_over_taugrid(model_dict,zvar_dict={'U_hh':'Average utility','C_hh':'Average consumption','ELL_hh':'Average labor, $\\ell$','K':'K','r':'r','B':'Bonds'},
+                    rows=3,cols=2,figsize=(16,12),
+                    xname='taua',yname='taul',xlabel='$\\tau^{a}$',ylabel='$\\tau^{\ell}$'):
     '''
     Plot the model dict from the function above across taus
     '''
     
-    taua_list = model_dict['taua_list']
-    taul_list = model_dict['taul_list']
+    x_list = model_dict[f'{xname}_list']
+    y_list = model_dict[f'{yname}_list']
 
-    taua_grid, taul_grid = np.meshgrid(taua_list,taul_list,indexing='ij')
+    x_grid, y_grid = np.meshgrid(x_list,y_list,indexing='ij')
 
     if len(zvar_dict)==1:
         rows = cols = 1
@@ -136,13 +144,13 @@ def plot_over_taugrid(model_dict,zvar_dict={'U_hh':'Average utility','C_hh':'Ave
         value = item[1]
         ax = fig.add_subplot(rows,cols,i+1,projection='3d')
         
-        ax.plot_surface(taua_grid,taul_grid,model_dict[key],cmap=cm.jet)
+        ax.plot_surface(x_grid,y_grid,model_dict[key],cmap=cm.jet)
         
-        ax.scatter(taua_grid,taul_grid,model_dict[key],cmap=cm.jet)
+        ax.scatter(x_grid,y_grid,model_dict[key],cmap=cm.jet)
         
         # b. add labels
-        ax.set_xlabel('$\\tau^{a}$') 
-        ax.set_ylabel('$\\tau^{\ell}$')
+        ax.set_xlabel(xlabel) 
+        ax.set_ylabel(ylabel)
         ax.set_zlabel(value)
 
         # c. invert xaxis to bring Origin in center front

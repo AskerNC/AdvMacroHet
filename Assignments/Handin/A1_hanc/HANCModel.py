@@ -20,7 +20,7 @@ class HANCModelClass(EconModelClass,GEModelClass):
         # b. household
         self.grids_hh = ['a'] # grids
         self.pols_hh = ['a'] # policy functions
-        self.inputs_hh = ['r','w','taua','taul'] # direct inputs
+        self.inputs_hh = ['r','w','taua','taul','theta','xh'] # direct inputs
         self.inputs_hh_z = [] # transition matrix inputs (not used today)
         self.outputs_hh = ['a','c','ell','u'] # outputs
         self.intertemps_hh = ['vbeg_a'] # intertemporal variables
@@ -33,7 +33,7 @@ class HANCModelClass(EconModelClass,GEModelClass):
         # d. all variables
         self.varlist = [
             'Y','C','I','G','IB','Gamma','K','L','KL','B','taxa','taxl',
-            'rk','w','r','taua','taul',
+            'rk','w','r','taua','taul','theta','xh',
             'A_hh','C_hh','ELL_hh','U_hh','L_hh',
             'clearing_A','clearing_C','clearing_L']
             
@@ -75,13 +75,11 @@ class HANCModelClass(EconModelClass,GEModelClass):
         
         # d. tax parameters 
         # parameters for increasing tax rate. theta=1 means constant marginal tax rate
-        par.theta = 1. 
+        par.theta_ss = 1. 
 
         # Parameter for which income gives the marginal tax taul ( when theta neq 1)
-        par.xh = 2.
+        par.xh_ss = 2.
         
-        # To simplyfy calculations:
-        par.xh_theta = par.xh**(par.theta-1)
 
         # f. grids         
         par.a_max = 100.0 # maximum point in grid for a
