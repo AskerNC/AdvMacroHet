@@ -78,7 +78,7 @@ class HANCModelClass(EconModelClass,GEModelClass):
         par.theta_ss = 1. 
 
         # Parameter for which income gives the marginal tax taul ( when theta neq 1)
-        par.xh_ss = 2.
+        par.xh_ss = 1.
         
 
         # f. grids         

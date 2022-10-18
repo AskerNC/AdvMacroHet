@@ -122,7 +122,8 @@ def make_model_dict(model,gridsize,start,end,roption='positive',method='kl',
 
 def plot_over_taugrid(model_dict,zvar_dict={'U_hh':'Average utility','C_hh':'Average consumption','ELL_hh':'Average labor, $\\ell$','K':'K','r':'r','B':'Bonds'},
                     rows=3,cols=2,figsize=(16,12),
-                    xname='taua',yname='taul',xlabel='$\\tau^{a}$',ylabel='$\\tau^{\ell}$'):
+                    xname='taua',yname='taul',xlabel='$\\tau^{a}$',ylabel='$\\tau^{\ell}$',
+                    azim=150,elev=20):
     '''
     Plot the model dict from the function above across taus
     '''
@@ -155,7 +156,7 @@ def plot_over_taugrid(model_dict,zvar_dict={'U_hh':'Average utility','C_hh':'Ave
 
         # c. invert xaxis to bring Origin in center front
         ax.invert_xaxis()
-        ax.view_init( azim=150,elev=20)
-    fig.tight_layout()
+        ax.view_init( azim=azim,elev=elev)
+    #fig.tight_layout()
     return fig
     
