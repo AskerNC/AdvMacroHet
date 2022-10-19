@@ -157,6 +157,7 @@ def plot_over_taugrid(model_dict,zvar_dict={'U_hh':'Average utility','C_hh':'Ave
         # c. invert xaxis to bring Origin in center front
         ax.invert_xaxis()
         ax.view_init( azim=azim,elev=elev)
-    #fig.tight_layout()
+    fig.tight_layout()
+    
     return fig
     
