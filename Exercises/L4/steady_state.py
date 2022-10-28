@@ -45,8 +45,22 @@ def prepare_hh_ss(model):
     # b. expectation
     ss.vbeg_a[:] = ss.z_trans@v_a
 
+    
 def obj_ss(B_ss,model,do_print=False):
-    """ objective when solving for steady state capital """
+    """
+    > The function `obj_ss` takes a guess for the steady state capital stock, and then computes the
+    implied steady state interest rate, and then solves the household problem, and then computes the
+    implied aggregate savings, and then returns the difference between the implied aggregate savings and
+    the steady state capital stock
+    
+    Args:
+      B_ss: the steady state capital stock
+      model: the model object
+      do_print: print the results of the optimization. Defaults to False
+    
+    Returns:
+      The difference between the aggregate assets and the aggregate debt.
+    """
 
     par = model.par
     ss = model.ss
@@ -93,6 +107,24 @@ def obj_ss(B_ss,model,do_print=False):
     return ss.clearing_A # target to hit
     
 def find_ss(model,method='direct',do_print=False,K_min=0.01,K_max=25.0,NK=100):
+    '''It finds the steady state of a model by either the direct or indirect method
+    
+    Parameters
+    ----------
+    model
+        the model object
+    method, optional
+        'direct' or 'indirect'
+    do_print, optional
+        whether to print the results
+    K_min
+        minimum value of K to search for steady state
+    K_max
+        the maximum value of capital to search for the steady state
+    NK, optional
+        number of points to use in the grid search
+    
+    '''
     """ find steady state using the direct or indirect method """
 
     t0 = time.time()
@@ -109,8 +141,18 @@ def find_ss(model,method='direct',do_print=False,K_min=0.01,K_max=25.0,NK=100):
 
 # K should be renamed to B
 def find_ss_direct(model,do_print=False,K_min=0,K_max=10.0,NK=10):
-    """ find steady state using direct method """
-
+    """
+     find steady state using direct method 
+    It finds the steady state by first doing a broad search for the steady state capital stock, then it
+    narrows the search interval, and finally it uses Brent's method to find the steady state capital
+    stock
+    
+    :param model: the model object
+    :param do_print: whether to print the results of the search, defaults to False (optional)
+    :param K_min: minimum value of capital stock to try, defaults to 0 (optional)
+    :param K_max: the maximum value of capital stock to try
+    :param NK: number of trial values for K_ss, defaults to 10 (optional)
+    """
     # a. broad search
     if do_print: print(f'### step 1: broad search ###\n')
 

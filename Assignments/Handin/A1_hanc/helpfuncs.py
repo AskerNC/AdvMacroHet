@@ -23,6 +23,30 @@ from HANCModel import HANCModelClass
 def clearing_across_kl(model,start,end,N,solveclearing='A',varlist =[ 'Y', 'C_hh','U_hh','A_hh','ELL_hh','I','K','L','B','taxa','taxl','r','w','clearing_A','clearing_C','clearing_L']):
     '''
     Calculates assets clearing across k/l ratio
+    It takes a model, a start and end value for the k/l ratio, the number of points to evaluate, and a
+    list of variables to return. It then solves the model for each value of the k/l ratio, and returns
+    the k/l ratio and the values of the variables in the list
+    
+    Parameters
+    ----------
+    model
+        the model object
+    start
+        the starting value of k/l
+    end
+        the end of the range of k/l ratios to consider
+    N
+        number of points to calculate
+    solveclearing, optional
+        'A' or 'C' or 'L'
+    varlist
+        list of variables to be returned
+    
+    Returns
+    -------
+        A dictionary with the variables in varlist as keys and the values of the variables at each point in
+    kl_list as values.
+    
     '''
     kl_list = np.linspace(start,end,N)
     
@@ -37,8 +61,24 @@ def clearing_across_kl(model,start,end,N,solveclearing='A',varlist =[ 'Y', 'C_hh
     return kl_list, out_dict
 
 def plot_clearing_across_kl(kl_list,out_dict,plotvar,solveclearing='A'):
-    '''
-    Plots assets clearing across k/l ratio
+    '''It takes a list of k/l ratios, a dictionary of output variables, and a variable to plot, and it
+    plots the variable against the k/l ratios
+    
+    Parameters
+    ----------
+    kl_list
+        a list of k/l ratios to solve for
+    out_dict
+        a dictionary of the output of the model
+    plotvar
+        the variable you want to plot
+    solveclearing, optional
+        'A' or 'K'
+    
+    Returns
+    -------
+        A figure object
+    
     '''
     fig = plt.figure(figsize=(12,4),dpi=100)
     ax = fig.add_subplot(1,1,1)
