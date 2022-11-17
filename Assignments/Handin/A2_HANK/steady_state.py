@@ -80,7 +80,7 @@ def evaluate_ss(model,do_print=False):
     # q and government 
     ss.q = 1/(1+ss.r-par.delta)
     ss.B = ss.A/ss.q
-    ss.tau = ((1-ss.q*(1-par.delta))* ss.B + ss.G +ss.chi)/(ss.Y)
+    ss.tau = ((1-ss.q*(1-par.delta))*ss.B + ss.G +ss.chi)/(ss.Y)
 
     # household 
     model.solve_hh_ss(do_print=do_print)

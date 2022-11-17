@@ -6,6 +6,7 @@ from GEModelTools import GEModelClass
 import household_problem
 import steady_state
 import blocks
+import blocks_B
 
 class HANKModelClass(EconModelClass,GEModelClass):
     
@@ -56,8 +57,8 @@ class HANKModelClass(EconModelClass,GEModelClass):
 
         # e. functions
         self.solve_hh_backwards = household_problem.solve_hh_backwards
-        self.block_pre = blocks.block_pre
-        self.block_post = blocks.block_post
+        self.block_pre = blocks_B.block_pre
+        self.block_post = blocks_B.block_post
         
     def setup(self):
         """ set baseline parameters """

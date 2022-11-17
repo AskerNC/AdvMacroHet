@@ -36,9 +36,7 @@ def block_pre(par,ini,ss,path,ncols=1):
 
 
         Gamma_lag       = lag(ini.Gamma,Gamma)
-        #B_lag           = lag(ini.B,B)
-        #tau_lag           = lag(ss.tau,tau)
-        #tau_lead            =lead(tau,ss.tau)
+        B_lag           = lag(ini.B,B)
 
         # wages
         w[:] = Gamma 
@@ -46,7 +44,6 @@ def block_pre(par,ini,ss,path,ncols=1):
         # inflation
         pi[:] = (1+pi_w)/(Gamma/Gamma_lag)-1
 
-        Y[:] = Gamma*L
 
         # Monetary policy
        
@@ -60,40 +57,26 @@ def block_pre(par,ini,ss,path,ncols=1):
         # fisher
         r[:] = (1+i)/(1+pi_lead)-1
         
-        # q by loop 
-        '''
-        ra[:] = lag(ss.r,r)
-        for t in range(par.T):      
-            q_lag = q[t-1] if t>0 else ini.q
-            q[t] = ((1+ra[t])*q_lag -1)/par.delta 
-        '''
-        
-        # Reverse loop
+
+
+        # Reverse loop to get q
         for t_ in range(par.T):
             t = (par.T-1)-t_
             q_lead = q[t+1] if t < par.T-1 else ss.q
             q[t] = (1+par.delta*q_lead)/(1+r[t])
         
-        
+
         q_lag = lag(ini.q,q)
         ra[:] = (1+par.delta*q)/q_lag-1
 
-        #Calculate B by loop
-        for t in range(par.T):
-            B_lag = B[t-1] if t>0 else ini.B
-            tau[t] = ss.tau+par.omega*ss.q* (B_lag-ss.B)/ss.Y
-            B[t] = ((1+q[t]*par.delta)*B_lag +G[t]+chi[t]-tau[t]*Y[t] )/q[t]
 
-        #tau[:] = ss.tau+par.omega*ss.q* (B_lag-ss.B)/ss.Y
+        tau[:] = ss.tau+par.omega*ss.q* (B_lag-ss.B)/ss.Y
 
-        #B[:] = (tau_lead-ss.tau)*ss.Y/(par.omega*ss.q)+ss.B
-
-        #B_lag= lag(ss.B,B)
         # Production
-        #Y[:] = 1/tau *( (1+q*par.delta)*B_lag- q*B+G+chi)
+        Y[:] = 1/tau *( (1+q*par.delta)*B_lag- q*B+G+chi)
 
         # Implied labor 
-        #L[:] = Y/Gamma
+        L[:] = Y/Gamma
 
         A[:] = q*B
         
