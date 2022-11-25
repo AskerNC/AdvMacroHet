@@ -31,7 +31,7 @@ class HANKModelClass(EconModelClass,GEModelClass):
         # c. GE
         self.shocks = ['G','chi','Gamma'] # exogenous inputs
         self.unknowns = ['pi_w','B'] # endogenous inputs
-        self.targets = ['NKWC_res','clearing_A'] # targets
+        self.targets = ['NKWPC_res','clearing_A'] # targets
         
         # d. all variables
         self.varlist = [ # all variables
@@ -44,7 +44,7 @@ class HANKModelClass(EconModelClass,GEModelClass):
             'Gamma',
             'i',
             'L',
-            'NKWC_res',
+            'NKWPC_res',
             'pi_w',
             'pi',
             'q',

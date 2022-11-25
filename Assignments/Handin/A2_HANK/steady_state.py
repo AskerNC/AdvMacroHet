@@ -121,7 +121,7 @@ def find_ss(model,do_print=False):
 
     # set varphi to clear NKPC
     par.varphi = (1/par.mu *(1-ss.tau)*ss.w *(ss.C_hh)**(-par.sigma)) /(ss.L**(par.nu))
-    ss.NKWC_res=0.
+    ss.NKWPC_res=0.
 
     # b. print
     if do_print:

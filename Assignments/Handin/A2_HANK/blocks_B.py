@@ -18,7 +18,7 @@ def block_pre(par,ini,ss,path,ncols=1):
         Gamma = path.Gamma[ncol,:]
         i = path.i[ncol,:]
         L = path.L[ncol,:]
-        NKWC_res = path.NKWC_res[ncol,:]
+        NKWPC_res = path.NKWPC_res[ncol,:]
         pi_w = path.pi_w[ncol,:]
         pi = path.pi[ncol,:]
         r = path.r[ncol,:]
@@ -97,7 +97,7 @@ def block_post(par,ini,ss,path,ncols=1):
         Gamma = path.Gamma[ncol,:]
         i = path.i[ncol,:]
         L = path.L[ncol,:]
-        NKWC_res = path.NKWC_res[ncol,:]
+        NKWPC_res = path.NKWPC_res[ncol,:]
         pi_w = path.pi_w[ncol,:]
         pi = path.pi[ncol,:]
         r = path.r[ncol,:]
@@ -115,6 +115,6 @@ def block_post(par,ini,ss,path,ncols=1):
         pi_w_lead = lead(pi_w,ss.pi_w)
 
         # The residual of the New Keynesian Phillips Curve.
-        NKWC_res[:] = pi_w -(par.kappa*(par.varphi*(L)**par.nu -1/par.mu *(1-tau)* w*(C_hh)**(-par.sigma)) +par.beta*pi_w_lead )
+        NKWPC_res[:] = pi_w -(par.kappa*(par.varphi*(L)**par.nu -1/par.mu *(1-tau)* w*(C_hh)**(-par.sigma)) +par.beta*pi_w_lead )
         clearing_A[:] = A-A_hh
         clearing_Y[:] = ss.Y-ss.C_hh -ss.G

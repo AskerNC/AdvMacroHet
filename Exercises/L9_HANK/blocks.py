@@ -2,12 +2,10 @@ import numpy as np
 import numba as nb
 
 from GEModelTools import lag, lead
-   
+
 @nb.njit
 def block_pre(par,ini,ss,path,ncols=1):
-
     for ncol in nb.prange(ncols):
-
         adjcost = path.adjcost[ncol,:]
         A_hh = path.A_hh[ncol,:]
         A = path.A[ncol,:]
@@ -91,7 +89,7 @@ def block_post(par,ini,ss,path,ncols=1):
         r_plus = lead(r,ss.r)
         pi_plus = lead(pi,ss.pi)
         Y_plus = lead(Y,ss.Y)
-
+    
         NKPC_res[:] = par.kappa*(w/Z-1/par.mu) + Y_plus/Y*np.log(1+pi_plus)/(1+r_plus) - np.log(1+pi)
 
         # b. market clearing
